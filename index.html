@@ -1,0 +1,248 @@
+<!doctype html><html lang="de-CH"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Parfanna Torkel – Kasse 21</title><link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#294735"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Torkel Kasse"><link rel="apple-touch-icon" href="./icon-192.png"><style>
+:root{font-family:system-ui,Arial;color:#27342c;background:#f5f3ed}*{box-sizing:border-box}body{margin:0}header{background:#294735;color:#fff;padding:18px}main{max-width:1100px;margin:auto;padding:14px}section{background:white;padding:17px;border-radius:14px;margin:12px 0;box-shadow:0 1px 7px #0001}h1{margin:0;font-size:25px}h2{font-size:18px;margin:0 0 12px}button,input,select{font:inherit}button{border:1px solid #cad4cb;border-radius:9px;padding:10px;background:#f5f7f3;cursor:pointer}button.active,.primary{background:#294735;color:white}.warn{background:#fff0cf;border-radius:8px;padding:11px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}.guests{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:7px;margin-top:10px}.guest{padding:9px 5px;min-height:54px}.guest small,.product small{display:block;color:#657268;font-size:12px}.guest.active small,.product.active small{color:white}.product{text-align:left;min-height:68px}.row{display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap}.line{padding:8px 0;border-bottom:1px solid #e7eae6}.muted{font-size:13px;color:#69766d}.total{font-size:25px;font-weight:750}input,select{padding:9px;border:1px solid #c7d0c8;border-radius:8px;max-width:100%}.small{padding:5px 10px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.mailbutton{display:inline-block;border:1px solid #cad4cb;border-radius:9px;padding:10px;background:#294735;color:#fff;text-decoration:none}.danger{color:#a12828}.tag{background:#e9eee9;border-radius:8px;padding:6px 9px}.hide{display:none}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #eee;text-align:left;padding:8px}td:last-child,th:last-child{text-align:right}@media print{header,.no-print,section:not(#printSection){display:none!important}#printSection{display:block!important;box-shadow:none}body{background:white}} </style></head><body>
+<header><h1>🍷 Parfanna Torkel</h1><div>Kasse Version 21 · iPad</div></header><main>
+<section class="no-print"><p class="row"><label>Anlass <input id="event" value="Testanlass" oninput="save()"></label><span id="tableOpenTotals" class="row" style="gap:6px"></span><span id="openTotal" class="tag"></span></p></section>
+<section class="no-print"><h2>1. Buchungsziel wählen</h2><div id="tables" class="actions"></div><div id="guests"></div><div id="renamePanel" class="hide actions"><input id="guestNameInput" type="text" placeholder="Gastname" maxlength="60" autocomplete="off"><button class="primary" onclick="saveGuestName()">Name speichern</button><button onclick="cancelRename()">Abbrechen</button></div></section>
+<div class="actions no-print"><button id="toggleBookingSection" onclick="toggleBookingSection()">2. Getränke & Essen buchen ausblenden</button></div>
+<section id="bookingSection" class="no-print"><div class="row"><h2>2. Getränke & Essen buchen</h2><span id="target" class="tag"></span></div><div class="actions"><input id="search" placeholder="Artikel suchen ..." oninput="drawProducts()"><button id="toggleProducts" onclick="toggleProducts()">Artikelliste ausblenden</button><button onclick="toggleEditor()">+ Artikel hinzufügen / bearbeiten</button></div><div id="editor" class="hide"><div class="actions"><input id="newName" placeholder="Artikelname"><select id="newCat"><option>Getränke</option><option>Kaffee</option><option>Bier</option><option>Apéro</option><option>Weisswein</option><option>Rotwein</option><option>Spirituosen</option><option>Essen</option></select><input id="newPrice" type="number" min="0" step="0.05" placeholder="Preis CHF"><button class="primary" id="saveProductBtn" onclick="saveProduct()">Artikel speichern</button><button id="cancelProductEdit" class="hide" onclick="cancelProductEdit()">Bearbeitung abbrechen</button></div><button class="small" onclick="toggleManage()" id="toggleManageBtn">Bestehende Artikel bearbeiten</button><div id="manageItems" class="hide"></div></div><div id="products"></div></section>
+<section class="no-print"><div class="row"><h2>3. Offene Bestellung</h2><span id="basketTarget" class="tag"></span></div><div id="basket"></div><div id="transferActions" class="actions"></div><div id="transferPanel" class="hide"></div><div id="payerPanel" class="hide"></div><div class="row"><b>Offen</b><span id="sum" class="total"></span></div><div class="actions"><button class="primary" onclick="openPayment()">Abrechnen</button><button onclick="checkoutTable()">Gesamten Tisch abrechnen</button></div><div id="payment" class="hide"><div class="row"><b>1. Rechnungsbetrag</b><strong id="paymentDue"></strong></div><div class="actions"><label>2. Betrag vom Gast CHF <input id="cashReceived" type="number" min="0" step="0.05" placeholder="z. B. 50.00" oninput="updateChange()"></label></div><div class="actions"><span>3. Differenz behandeln</span><select id="differenceMode" class="hide" aria-label="Differenz behandeln"><option value="return">Rest zurückgeben</option><option value="tip">Rest als Trinkgeld</option></select><button id="returnButton" type="button" onclick="setDifferenceMode('return')">Rückgeld</button><button id="tipButton" type="button" onclick="setDifferenceMode('tip')">Trinkgeld</button><span id="changeDisplay" class="tag">Rückgeld: –</span><span id="tipDisplay" class="tag">Trinkgeld: CHF 0.00</span></div><div class="actions"><label>4. Zahlungsart <select id="paymentMethod" onchange="updateChange()"><option value="Bargeld">Bargeld</option><option value="TWINT">TWINT</option><option value="Rechnung">Rechnung</option></select></label></div><p id="paymentHint" class="muted"></p><p id="paymentResult" class="muted"></p><div class="actions"><button class="primary" onclick="confirmPayment()">5. Zahlung bestätigen</button><button onclick="cancelPayment()">Abbrechen</button></div></div></section>
+<div class="actions no-print"><button id="toggleOverviewSection" type="button" onclick="toggleOverviewSection()">4. Quittungen & Gesamtübersicht ausblenden</button></div>
+<section id="overviewSection" class="no-print"><h2>4. Quittungen & Gesamtübersicht</h2><div id="summary"></div><div class="actions"><button onclick="backupData()">💾 Datensicherung erstellen</button><button onclick="document.getElementById('backupFile').click()">📂 Datensicherung wiederherstellen</button><input id="backupFile" type="file" accept=".json,application/json" class="hide" onchange="restoreData(this)"><button onclick="exportCsv()">CSV-Gesamtübersicht</button><button onclick="printOverview()">Gesamtübersicht drucken</button><button onclick="closeEvent()">Anlass abschliessen</button><button class="danger" onclick="resetAll()">Testdaten löschen</button></div><div id="dailyOverview"></div><div id="articleReport"><h3>Artikel-Mengenauswertung</h3></div><div id="emailPanel" class="hide"></div><div id="receipts"></div><div id="archive"></div></section>
+<section id="printSection" class="hide"><div class="actions no-print"><button class="primary" onclick="window.print()">🖨️ Drucken / PDF</button><button onclick="document.getElementById('printSection').classList.add('hide')">Beleg schliessen</button></div><p class="muted no-print">Falls kein Druckfenster erscheint: Öffne die Kasse in Safari. In der OneDrive-Vorschau kann Drucken eingeschränkt sein.</p><div id="printContent"></div></section></main>
+<script>
+const original=[["Getränke", "Melser Mineralwasser 7.5 dl", 6], ["Getränke", "Sprite, Cola, Rivella 3 dl", 4], ["Getränke", "Sprite, Cola, Rivella 1.5 Liter", 8], ["Kaffee", "Café Crème, Espresso", 4.5], ["Kaffee", "Latte Macchiato, Cappuccino", 5], ["Kaffee", "Tee", 4], ["Kaffee", "Kafi Chrüter, Zwetschgen-Lutz", 6], ["Kaffee", "Torkelkafi", 7], ["Spirituosen", "Torkelschnaps 2 cl", 3], ["Bier", "Bier Spezli 33 cl", 5], ["Apéro", "Prosecco", 8], ["Apéro", "Aperol Spritz", 8], ["Apéro", "Lillet-Drink", 8], ["Apéro", "Gin", 8], ["Apéro", "Apèrogetränke Alkoholfrei", 5.5], ["Getränke", "Orangensaft 1 Liter", 10], ["Weisswein", "Melser Federweiss, Rathauskeller 5 dl", 20], ["Weisswein", "Müller Thurgau, Müller Weine 5 dl", 20], ["Rotwein", "Melser Blauburgunder, Rathauskeller 5 dl", 20], ["Weisswein", "Chasselas Arvine Arneis, Wallis 7.5 dl", 34], ["Weisswein", "Juan Gil Muscatel Seco, Spanien 7.5 dl", 29], ["Weisswein", "TIMO Vermentino San Marzano, Italien 7.5 dl", 29], ["Rotwein", "Bodegas Emilio Moro Ribera del Duero, Spanien 7.5 dl", 45], ["Rotwein", "Reserva de Don Carlos, Tempranillo, Spanien 7.5 dl", 37], ["Rotwein", "Rioja Azabache Crianza DOCa, Spanien 5 dl", 21], ["Rotwein", "Primitivo Senza Parole, Italien 5 dl", 23], ["Rotwein", "Silentium Primitivo di Manduria DOC, Italien 3.75 dl", 21]];
+const storeKey='parfanna-test-v2';
+let state={items:original.map((x,i)=>({id:i+1,category:x[0],name:x[1],price:x[2]})),orders:{},receipts:[],names:{},event:'Testanlass',nextId:original.length+1,archive:[]};
+try{const v=JSON.parse(localStorage.getItem(storeKey));if(v&&Array.isArray(v.items))state=v}catch(e){}
+let table='Anlass',seat=0,selected='Anlass',lastPrint=null,paymentKeys=null;
+const money=x=>'CHF '+Number(x||0).toFixed(2),esc=x=>String(x??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;'),item=id=>state.items.find(p=>p.id===id);
+function save(){state.event=document.getElementById('event').value;try{localStorage.setItem(storeKey,JSON.stringify(state))}catch(e){alert('Browser konnte Testdaten nicht speichern. Bitte CSV exportieren.')}}
+function key(t,n){return n?t+' · Gast '+n:t}
+function label(k){const m=k.match(/^(Tisch \d+) · Gast (\d+)$/);return m?m[1]+' · '+(state.names[k]||'Gast '+m[2]):k}
+function amount(b){return (b||[]).reduce((s,x)=>s+x.qty*x.price,0)}
+function setTable(t){cancelRename();table=t;seat=0;selected=t;drawTables();drawGuests();drawBasket()}
+function drawTables(){document.getElementById('tables').innerHTML=['Anlass',...Array.from({length:5},(_,i)=>'Tisch '+(i+1))].map(t=>`<button class="${table===t?'active':''}" onclick="setTable('${t}')">${t==='Anlass'?'Gesamtanlass':t}</button>`).join('')}
+function drawGuests(){const g=document.getElementById('guests');if(table==='Anlass'){g.innerHTML='<span class="muted">Direkt auf den Anlass buchen.</span>';return}g.innerHTML=`<button class="${seat===0?'active':''}" onclick="chooseSeat(0)">Ganzer Tisch</button><div class="guests">${Array.from({length:8},(_,i)=>{const n=i+1,k=key(table,n);return `<button class="guest ${seat===n?'active':''}" onclick="chooseSeat(${n})">${esc(state.names[k]||'Gast '+n)}<small>${money(amount(state.orders[k]))}</small></button>`}).join('')}</div><div class="actions"><button onclick="renameGuest()">✏️ Gewählten Gast umbenennen</button></div><div class="muted">Es werden nur die 8 Gäste des gewählten Tisches angezeigt. Die Namen sind frei wählbar. Maximal 30 Gäste pro Anlass.</div>`}
+function chooseSeat(n){cancelRename();if(n>0){let active=new Set([...Object.keys(state.orders),...Object.keys(state.names)].filter(k=>/Tisch \d+ · Gast \d+/.test(k)&&((state.orders[k]||[]).length||state.names[k])));if(!active.has(key(table,n))&&active.size>=30){alert('Maximal 30 erfasste Gäste.');return}}seat=n;selected=key(table,n);drawGuests();drawBasket()}
+function renameGuest(){if(!seat){alert('Bitte zuerst Gast 1–8 auswählen.');return}const k=key(table,seat);const panel=document.getElementById('renamePanel'),input=document.getElementById('guestNameInput');input.value=state.names[k]||'';panel.classList.remove('hide');input.focus();input.select()}
+function cancelRename(){document.getElementById('renamePanel').classList.add('hide')}
+function saveGuestName(){if(!seat)return;state.names[key(table,seat)]=document.getElementById('guestNameInput').value.trim().slice(0,60);save();cancelRename();drawGuests();drawBasket()}
+
+function drawProducts(){let q=document.getElementById('search').value.toLowerCase();let list=state.items.filter(p=>(p.name+' '+p.category).toLowerCase().includes(q));let cats=[...new Set(list.map(p=>p.category))];document.getElementById('products').innerHTML=cats.map(c=>`<h3>${esc(c)}</h3><div class="grid">${list.filter(p=>p.category===c).map(p=>`<button class="product" onclick="add(${p.id})">${esc(p.name)}<small>${money(p.price)}</small></button>`).join('')}</div>`).join('')||'<p>Keine Artikel gefunden.</p>'}
+function toggleProducts(){let p=document.getElementById('products'),hidden=p.classList.toggle('hide');document.getElementById('toggleProducts').textContent=hidden?'Artikelliste einblenden':'Artikelliste ausblenden'}
+let bookingManuallyHidden=false;
+function toggleOverviewSection(){const section=document.getElementById('overviewSection');const hidden=section.classList.toggle('hide');document.getElementById('toggleOverviewSection').textContent=hidden?'4. Quittungen & Gesamtübersicht einblenden':'4. Quittungen & Gesamtübersicht ausblenden';}
+function updateBookingVisibility(){const hidden=bookingManuallyHidden||!document.getElementById('payment').classList.contains('hide');document.getElementById('bookingSection').classList.toggle('hide',hidden);document.getElementById('toggleBookingSection').textContent=bookingManuallyHidden?'2. Getränke & Essen buchen einblenden':'2. Getränke & Essen buchen ausblenden';}
+function toggleBookingSection(){bookingManuallyHidden=!bookingManuallyHidden;updateBookingVisibility();}
+function openPayment(keys=[selected]){paymentKeys=keys;let due=keys.reduce((s,k)=>s+amount(state.orders[k]),0);if(!due){alert('Keine offenen Artikel.');return}document.getElementById('payment').classList.remove('hide');updateBookingVisibility();document.getElementById('payment').scrollIntoView({behavior:'smooth',block:'start'});document.getElementById('paymentResult').textContent='';document.getElementById('paymentDue').textContent=money(due);document.getElementById('cashReceived').value=due.toFixed(2);document.getElementById('differenceMode').value='return';document.getElementById('paymentMethod').value='Bargeld';updateChange();}
+function setDifferenceMode(mode){if(document.getElementById('paymentMethod').value==='Rechnung')return;document.getElementById('differenceMode').value=mode;updateChange();}
+function updateChange(){const due=(paymentKeys||[selected]).reduce((s,k)=>s+amount(state.orders[k]),0),method=document.getElementById('paymentMethod').value,raw=document.getElementById('cashReceived').value,received=raw===''?NaN:Number(raw),mode=document.getElementById('differenceMode').value,invoice=method==='Rechnung',difference=Math.round((received-due)*100)/100;document.getElementById('cashReceived').disabled=invoice;document.getElementById('differenceMode').disabled=invoice;document.getElementById('returnButton').disabled=invoice;document.getElementById('tipButton').disabled=invoice;document.getElementById('returnButton').classList.toggle('active',!invoice&&mode==='return');document.getElementById('tipButton').classList.toggle('active',!invoice&&mode==='tip');document.getElementById('paymentDue').textContent=money(due);document.getElementById('changeDisplay').textContent='Rückgeld: '+money(invoice?0:Math.max(0,mode==='return'?difference:0));document.getElementById('tipDisplay').textContent='Trinkgeld: '+money(invoice?0:Math.max(0,mode==='tip'?difference:0));document.getElementById('paymentHint').textContent=invoice?'Bei Rechnung wird ausschliesslich der Rechnungsbetrag '+money(due)+' als offene Forderung erfasst.':!Number.isFinite(received)?'Bitte erhaltenen Betrag eingeben.':received<due?'Betrag zu klein: Es fehlen '+money(due-received)+'.':'Total inklusive Trinkgeld: '+money(due+(mode==='tip'?Math.max(0,difference):0));}
+function cancelPayment(){document.getElementById('payment').classList.add('hide');updateBookingVisibility();paymentKeys=null;}
+function confirmPayment(){checkout(document.getElementById('paymentMethod').value,paymentKeys||[selected]);}
+function toggleEditor(){document.getElementById('editor').classList.toggle('hide');document.getElementById('manageItems').classList.add('hide');document.getElementById('toggleManageBtn').textContent='Bestehende Artikel bearbeiten'}
+function toggleManage(){const el=document.getElementById('manageItems');const hidden=el.classList.toggle('hide');document.getElementById('toggleManageBtn').textContent=hidden?'Bestehende Artikel bearbeiten':'Artikelliste schliessen';if(!hidden)drawManage()}
+function drawManage(){document.getElementById('manageItems').innerHTML=state.items.map(p=>`<div class="row line"><span>${esc(p.name)} · ${money(p.price)}</span><span class="actions"><button class="small" onclick="editProduct(${p.id})">Bearbeiten</button><button class="small" onclick="deleteProduct(${p.id})">Löschen</button></span></div>`).join('')}
+function deleteProduct(id){
+  const p=item(id);if(!p)return;
+  if(!confirm('Möchtest du den Artikel «'+p.name+'» wirklich löschen?\n\nBereits gebuchte Artikel und Quittungen bleiben erhalten.'))return;
+  state.items=state.items.filter(x=>x.id!==id);
+  if(editingProductId===id)cancelProductEdit();
+  save();drawProducts();drawManage();
+}
+let editingProductId=null;
+function cancelProductEdit(){editingProductId=null;document.getElementById('newName').value='';document.getElementById('newPrice').value='';document.getElementById('saveProductBtn').textContent='Artikel speichern';document.getElementById('cancelProductEdit').classList.add('hide')}
+function saveProduct(){let name=document.getElementById('newName').value.trim(),price=Number(document.getElementById('newPrice').value);if(!name||!Number.isFinite(price)||price<0||document.getElementById('newPrice').value===''){alert('Bitte Name und gültigen Preis eingeben.');return}if(editingProductId!==null){const p=item(editingProductId);if(!p)return;p.name=name;p.price=price;p.category=document.getElementById('newCat').value}else{state.items.push({id:state.nextId++,category:document.getElementById('newCat').value,name,price})}cancelProductEdit();save();drawProducts();drawManage()}
+function editProduct(id){const p=item(id);if(!p)return;editingProductId=id;document.getElementById('editor').classList.remove('hide');document.getElementById('newName').value=p.name;document.getElementById('newCat').value=p.category;document.getElementById('newPrice').value=p.price.toFixed(2);document.getElementById('saveProductBtn').textContent='Änderungen speichern';document.getElementById('cancelProductEdit').classList.remove('hide');document.getElementById('newName').focus();document.getElementById('newName').scrollIntoView({block:'center',behavior:'smooth'})}
+function add(id){let p=item(id);let b=state.orders[selected]||[];let e=b.find(x=>x.id===id&&x.price===p.price);if(e)e.qty++;else b.push({id,qty:1,price:p.price,name:p.name});state.orders[selected]=b;save();drawBasket();drawGuests()}
+function change(index,delta){let b=state.orders[selected]||[];if(!b[index])return;b[index].qty+=delta;state.orders[selected]=b.filter(x=>x.qty>0);save();drawBasket();drawGuests()}
+function showTransfer(){
+  if(table==='Anlass'||seat!==0){alert('Bitte zuerst den ganzen Tisch auswählen.');return}
+  const b=state.orders[table]||[];
+  if(!b.length){alert('Auf diesem Tisch sind keine offenen Artikel.');return}
+  const panel=document.getElementById('transferPanel');
+  panel.classList.remove('hide');
+  document.getElementById('basket').classList.add('hide');
+  document.getElementById('transferActions').classList.add('hide');
+  panel.innerHTML=`<div class="tag"><b>Artikel vom ${esc(table)} auf einen Gast übertragen</b><p class="muted">Wähle den Gast und die Stückzahl je Artikel. Nicht übertragene Artikel bleiben auf dem Tisch.</p><label>Gast <select id="transferGuest">${Array.from({length:8},(_,i)=>{const k=key(table,i+1);return `<option value="${i+1}">${esc(state.names[k]||'Gast '+(i+1))}</option>`}).join('')}</select></label><div>${b.map((x,i)=>`<div class="row line"><span>${esc(x.name)} <small style="font-weight:700">(auf Tisch: ${x.qty} × ${money(x.price)})</small></span><label>Übertragen: <input class="transferQty" data-index="${i}" type="number" min="0" max="${x.qty}" step="1" value="0" style="width:85px"></label></div>`).join('')}</div><div class="actions"><button class="primary" onclick="commitTransfer()">Artikel übertragen</button><button onclick="closeTransfer()">Abbrechen</button></div></div>`;
+}
+function closeTransfer(){document.getElementById('transferPanel').classList.add('hide');document.getElementById('transferPanel').innerHTML='';document.getElementById('basket').classList.remove('hide');document.getElementById('transferActions').classList.remove('hide')}
+function commitTransfer(){
+  if(table==='Anlass'||seat!==0)return;
+  const b=state.orders[table]||[];
+  const entries=[...document.querySelectorAll('.transferQty')].map(el=>({index:Number(el.dataset.index),qty:Number(el.value),raw:el.value}));
+  if(entries.length!==b.length||entries.some(({index,qty,raw})=>raw.trim()===''||!Number.isInteger(qty)||qty<0||qty>b[index].qty)){alert('Bitte gültige ganze Stückzahlen eingeben.');return}
+  if(!entries.some(x=>x.qty>0)){alert('Bitte mindestens einen Artikel auswählen.');return}
+  const guest=Number(document.getElementById('transferGuest').value);
+  if(!Number.isInteger(guest)||guest<1||guest>8)return;
+  const dest=key(table,guest);
+  const active=new Set([...Object.keys(state.orders),...Object.keys(state.names)].filter(k=>/Tisch \d+ · Gast \d+/.test(k)&&((state.orders[k]||[]).length||state.names[k])));
+  if(!active.has(dest)&&active.size>=30){alert('Maximal 30 erfasste Gäste.');return}
+  const to=state.orders[dest]||[];
+  entries.forEach(({index,qty})=>{if(!qty)return;const x=b[index];const existing=to.find(y=>y.id===x.id&&y.price===x.price&&y.name===x.name);if(existing)existing.qty+=qty;else to.push({...x,qty});x.qty-=qty});
+  state.orders[table]=b.filter(x=>x.qty>0);state.orders[dest]=to;
+  save();closeTransfer();drawBasket();drawGuests();
+  alert('Artikel auf '+label(dest)+' übertragen. Wähle den Gast zum Abrechnen.');
+}
+function showPayerTransfer(){
+ if(table==='Anlass'||seat===0){alert('Bitte zuerst den Gast wählen, der bezahlen möchte.');return}
+ const payer=selected;
+ const sources=[table,...Array.from({length:8},(_,i)=>key(table,i+1))].filter(k=>k!==payer&&amount(state.orders[k])>0);
+ if(!sources.length){alert('Keine offenen Artikel anderer Gäste an diesem Tisch.');return}
+ const panel=document.getElementById('payerPanel');panel.classList.remove('hide');
+ panel.innerHTML=`<div class="tag"><b>Für andere Gäste bezahlen – ${esc(label(payer))}</b><p class="muted">Wähle, welche Konsumationen dieser Gast zusätzlich übernimmt. Du kannst alles oder nur einzelne Artikel auswählen. Die ursprüngliche Zuordnung wird auf der Quittung vermerkt.</p>${sources.map((k,si)=>`<div class="line"><div class="row"><b>${esc(label(k))} · ${money(amount(state.orders[k]))}</b><button class="small" type="button" onclick="payerAll(${si})">Alles übernehmen</button></div>${state.orders[k].map((x,i)=>`<div class="row line"><span>${esc(x.name)} · ${money(x.price)} (offen: ${x.qty})</span><label>Anzahl <input type="number" inputmode="numeric" class="payerQty" data-source="${si}" data-index="${i}" min="0" max="${x.qty}" step="1" value="0" style="width:75px"></label></div>`).join('')}</div>`).join('')}<div class="actions"><button class="primary" onclick="commitPayerTransfer()">Auswahl übernehmen</button><button onclick="closePayerTransfer()">Abbrechen</button></div></div>`;
+ panel.dataset.sources=JSON.stringify(sources);panel.dataset.payer=payer;
+ panel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function payerAll(si){document.querySelectorAll('#payerPanel .payerQty').forEach(el=>{if(Number(el.dataset.source)===si)el.value=el.max})}
+function closePayerTransfer(){const panel=document.getElementById('payerPanel');panel.classList.add('hide');panel.innerHTML='';delete panel.dataset.sources;delete panel.dataset.payer}
+function commitPayerTransfer(){
+ const panel=document.getElementById('payerPanel'),sources=JSON.parse(panel.dataset.sources||'[]'),payer=panel.dataset.payer;
+ if(!payer||!sources.length)return;
+ const entries=[...panel.querySelectorAll('.payerQty')].map(el=>({k:sources[Number(el.dataset.source)],i:Number(el.dataset.index),qty:Number(el.value),raw:el.value}));
+ if(entries.some(e=>!e.k||!state.orders[e.k]?.[e.i]||e.raw.trim()===''||!Number.isInteger(e.qty)||e.qty<0||e.qty>state.orders[e.k][e.i].qty)){alert('Bitte gültige ganze Stückzahlen eingeben.');return}
+ if(!entries.some(e=>e.qty>0)){alert('Bitte mindestens einen Artikel auswählen.');return}
+ const dest=state.orders[payer]||[];
+ entries.forEach(e=>{if(!e.qty)return;const x=state.orders[e.k][e.i],origin=x.origin||label(e.k);const same=dest.find(y=>y.id===x.id&&y.price===x.price&&y.name===x.name&&y.origin===origin);if(same)same.qty+=e.qty;else dest.push({...x,qty:e.qty,origin});x.qty-=e.qty});
+ sources.forEach(k=>state.orders[k]=state.orders[k].filter(x=>x.qty>0));state.orders[payer]=dest;
+ save();closePayerTransfer();drawBasket();drawGuests();alert('Konsumationen übernommen. '+label(payer)+' kann jetzt den Gesamtbetrag bezahlen.');
+}
+function drawBasket(){document.getElementById('target').textContent=label(selected);document.getElementById('basketTarget').textContent=label(selected);let b=state.orders[selected]||[];document.getElementById('basket').innerHTML=b.length?b.map((x,i)=>`<div class="row line"><span>${x.qty} × ${esc(x.name)}${x.origin?' <small class="muted">(übernommen von '+esc(x.origin)+')</small>':''}</span><span>${money(x.price*x.qty)} <button class="small" onclick="change(${i},-1)">−</button> <button class="small" onclick="change(${i},1)">+</button></span></div>`).join(''):'<p class="muted">Keine offenen Artikel.</p>';document.getElementById('transferActions').innerHTML=(table!=='Anlass'&&seat===0&&b.length)?'<button onclick="showTransfer()">↗ Artikel auf Gast übertragen</button>':(table!=='Anlass'&&seat>0?'<button onclick="showPayerTransfer()">↗ Für andere Gäste bezahlen</button>':'');closeTransfer();closePayerTransfer();document.getElementById('sum').textContent=money(amount(b));document.getElementById('tableOpenTotals').innerHTML=Array.from({length:5},(_,i)=>{const t='Tisch '+(i+1);const v=Object.entries(state.orders).reduce((sum,[k,b])=>sum+(k===t||k.startsWith(t+' · Gast ')?amount(b):0),0);return v>0?'<span class="tag">'+t+': <b>'+money(v)+'</b></span>':''}).join('');document.getElementById('openTotal').textContent='Offen gesamt: '+money(Object.values(state.orders).reduce((s,b)=>s+amount(b),0));document.getElementById('payment').classList.add('hide');updateBookingVisibility();paymentKeys=null;drawSummary()}
+function checkout(method,keys=[selected]){let lines=keys.flatMap(k=>(state.orders[k]||[]).map(x=>({...x,source:x.origin||label(k)}))),v=amount(lines);if(!v){alert('Keine offenen Artikel.');return}let tendered=null,change=0,tip=0;if(method!=='Rechnung'){const raw=document.getElementById('cashReceived').value;tendered=Number(raw);if(raw===''||!Number.isFinite(tendered)||tendered<v){alert('Erhaltener Betrag muss mindestens '+money(v)+' betragen.');return}const difference=Math.round((tendered-v)*100)/100;if(document.getElementById('differenceMode').value==='tip')tip=difference;else change=difference;}const message='TEST: '+money(v)+' als '+method+' abrechnen?'+(method==='Rechnung'?'\nOffene Rechnung: '+money(v):'\nErhalten: '+money(tendered)+'\nTrinkgeld: '+money(tip)+'\nRückgeld: '+money(change));let r={id:Date.now()+'-'+Math.floor(Math.random()*100000),event:state.event,target:keys.length===1?label(keys[0]):table+' gesamt',method,amount:v,tendered,change,tip,lines,date:new Date().toLocaleString('de-CH'),day:localDay()};state.receipts.push(r);keys.forEach(k=>state.orders[k]=[]);document.getElementById('cashReceived').value='';save();drawBasket();drawGuests();drawReceipts();lastPrint=r;alert('Zahlung gespeichert: '+money(v+(tip||0))+' ('+method+').');}
+function checkoutTable(){if(table==='Anlass'){alert('Bitte zuerst einen Tisch wählen.');return}let keys=[table,...Array.from({length:8},(_,i)=>key(table,i+1))].filter(k=>amount(state.orders[k])>0);if(!keys.length){alert('Keine offenen Artikel an diesem Tisch.');return}openPayment(keys)}
+function localDay(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function receiptHtml(r){return `<h2>Parfanna Torkel</h2><p>${esc(r.event)}<br>${esc(r.date)}<br>${esc(r.target)}</p><table><tr><th>Artikel</th><th>Betrag</th></tr>${r.lines.map(x=>`<tr><td>${x.qty} × ${esc(x.name)}${x.source&&x.source!==r.target?' ('+esc(x.source)+')':''}</td><td>${money(x.qty*x.price)}</td></tr>`).join('')}</table><h2>Artikel total: ${money(r.amount)}</h2><p>Zahlungsart: ${esc(r.method)}${r.method==='Rechnung'?' (offen / keine Zahlungsbestätigung)':''}</p>${r.method!=='Rechnung'?'<p>Erhalten: '+money(r.tendered??r.amount)+'<br>Trinkgeld: '+money(r.tip??0)+'<br>Rückgeld: '+money(r.change??0)+'<br><b>Total inkl. Trinkgeld: '+money(r.amount+(r.tip||0))+'</b></p>':''}<p>Testbeleg – keine rechtsgültige Rechnung.</p>`}
+function printReceipt(id){let r=state.receipts.find(x=>x.id===id);if(!r)return;printContent(receiptHtml(r))}
+function printContent(html){
+  const area=document.getElementById('printContent');
+  area.innerHTML=html;
+  document.getElementById('printSection').classList.remove('hide');
+  // Die OneDrive-Vorschau auf iPad kann window.print blockieren.
+  // Darum bleibt der druckfertige Beleg auch sichtbar und kann über das Teilen-Menü gedruckt werden.
+  document.getElementById('printSection').scrollIntoView({behavior:'smooth',block:'start'});
+  try{window.print()}catch(e){}
+}
+
+function emailReceipt(id){
+  const r=state.receipts.find(x=>x.id===id);if(!r)return;
+  const subject='Quittung Parfanna Torkel – '+r.event;
+  const body=`Parfanna Torkel\\n${r.event}\\n${r.date}\\n${r.target}\\n\\n`+
+    r.lines.map(x=>`${x.qty} x ${x.name}: ${money(x.qty*x.price)}`).join('\\n')+
+    `\\n\\nArtikel total: ${money(r.amount)}\\nZahlungsart: ${r.method}`+
+    (r.method!=='Rechnung'?`\\nErhalten: ${money(r.tendered??r.amount)}\\nTrinkgeld: ${money(r.tip??0)}\\nRückgeld: ${money(r.change??0)}\\nTotal inkl. Trinkgeld: ${money(r.amount+(r.tip||0))}`:'\\nRechnung offen: '+money(r.amount));
+  const link='mailto:?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  // Ein echter Link wird auf iPad meist zuverlässiger behandelt als window.location aus der OneDrive-Vorschau.
+  const panel=document.getElementById('emailPanel');
+  panel.classList.remove('hide');
+  panel.innerHTML='<h3>E-Mail-Entwurf</h3><p>Tippe auf «E-Mail öffnen». Falls OneDrive das blockiert, kopiere den Text und füge ihn in Mail ein.</p>'+
+    '<div class="actions"><a id="emailOpen" class="mailbutton" href="'+esc(link)+'">✉️ E-Mail öffnen</a>'+
+    '<button onclick="copyEmailText()">Text kopieren</button><button onclick="document.getElementById(\'emailPanel\').classList.add(\'hide\')">Schliessen</button></div>'+
+    '<textarea id="emailText" readonly rows="10" style="width:100%;font:inherit;padding:10px">'+esc('Betreff: '+subject+'\\n\\n'+body)+'</textarea>';
+}
+async function copyEmailText(){
+  const field=document.getElementById('emailText');field.focus();field.select();
+  try{await navigator.clipboard.writeText(field.value);alert('E-Mail-Text kopiert.')}catch(e){
+    try{document.execCommand('copy');alert('Text zum Kopieren markiert.')}catch(err){alert('Bitte den Text markieren und kopieren.')}
+  }
+}
+
+function drawSummary(){let paid=state.receipts.filter(r=>r.method!=='Rechnung').reduce((s,r)=>s+r.amount,0),invoice=state.receipts.filter(r=>r.method==='Rechnung').reduce((s,r)=>s+r.amount,0),open=Object.values(state.orders).reduce((s,b)=>s+amount(b),0);document.getElementById('summary').innerHTML=`<div class="grid">${[['Bargeld',state.receipts.filter(r=>r.method==='Bargeld').reduce((s,r)=>s+r.amount,0)],['TWINT',state.receipts.filter(r=>r.method==='TWINT').reduce((s,r)=>s+r.amount,0)],['Rechnung (offen)',invoice],['Trinkgeld (separat)',state.receipts.reduce((s,r)=>s+(r.tip||0),0)],['Noch nicht abgerechnet',open],['Umsatz abgerechnet',paid+invoice]].map(([a,b])=>`<div class="tag"><div class="muted">${a}</div><b>${money(b)}</b></div>`).join('')}</div>`}
+function drawDaily(){let grouped={};state.receipts.forEach(r=>{const day=r.day||'Datum nicht erfasst';let g=grouped[day]||(grouped[day]={bar:0,twint:0,invoice:0,tip:0});if(r.method==='Bargeld')g.bar+=r.amount;if(r.method==='TWINT')g.twint+=r.amount;if(r.method==='Rechnung')g.invoice+=r.amount;g.tip+=r.tip||0});document.getElementById('dailyOverview').innerHTML='<h3>Tagesgenaue Auswertung</h3>'+(Object.keys(grouped).length?'<table><tr><th>Datum</th><th>Bar</th><th>TWINT</th><th>Rechnung</th><th>Trinkgeld</th><th>Umsatz</th></tr>'+Object.entries(grouped).sort((a,b)=>a[0].localeCompare(b[0])).map(([day,g])=>`<tr><td>${esc(day)}</td><td>${money(g.bar)}</td><td>${money(g.twint)}</td><td>${money(g.invoice)}</td><td>${money(g.tip)}</td><td>${money(g.bar+g.twint+g.invoice)}</td></tr>`).join('')+'</table>':'<p class="muted">Noch keine Abrechnungen.</p>');document.getElementById('archive').innerHTML=(state.archive||[]).length?'<h3>Abgeschlossene Anlässe</h3>'+state.archive.map((a,i)=>`<div class="line"><div class="row"><span>${esc(a.event)} · ${esc(a.closed)} · Umsatz ${money(a.turnover)} · Trinkgeld ${money(a.tip)} · Offene Rechnungen ${money(a.invoices)}</span><button class="small danger" onclick="deleteArchivedEvent(${i})">Anlass löschen</button></div></div>`).join(''):''}
+
+function articleReportEvents(){
+  return [...(state.archive||[]).map((a,i)=>({id:'a'+i,name:a.event||'Anlass',date:a.closed||'',receipts:a.receipts||[],current:false})),
+    {id:'current',name:state.event||'Aktueller Anlass',date:'laufend',receipts:state.receipts||[],current:true}];
+}
+function reportSelection(){
+  const selected=[...document.querySelectorAll('#articleReport input[data-report-event]:checked')].map(e=>e.value);
+  return articleReportEvents().filter(e=>selected.includes(e.id));
+}
+function articleTotals(events){
+  const map=new Map();
+  for(const ev of events){
+    for(const receipt of ev.receipts){
+      for(const line of (receipt.lines||[])){
+        const name=String(line.name||'Unbekannter Artikel');
+        const price=Number(line.price)||0,qty=Number(line.qty)||0;
+        const key=name+'\u0000'+price.toFixed(2);
+        if(!map.has(key))map.set(key,{name,price,qty:0});
+        map.get(key).qty+=qty;
+      }
+    }
+  }
+  return [...map.values()].sort((a,b)=>a.name.localeCompare(b.name,'de-CH')||a.price-b.price);
+}
+function articleReportTable(events){
+  const rows=articleTotals(events);
+  return rows.length?'<table><thead><tr><th>Artikel</th><th>Einzelpreis</th><th>Menge</th><th>Total</th></tr></thead><tbody>'+
+    rows.map(x=>`<tr><td>${esc(x.name)}</td><td>${money(x.price)}</td><td>${x.qty}</td><td>${money(x.price*x.qty)}</td></tr>`).join('')+
+    `</tbody><tfoot><tr><th>Gesamt</th><th></th><th>${rows.reduce((n,x)=>n+x.qty,0)}</th><th>${money(rows.reduce((n,x)=>n+x.qty*x.price,0))}</th></tr></tfoot></table>`:
+    '<p class="muted">Keine abgerechneten Artikel für die gewählten Anlässe vorhanden.</p>';
+}
+function updateArticleReport(){
+  const target=document.getElementById('articleReportResult');
+  if(!target)return;
+  const events=reportSelection();
+  target.innerHTML=events.length?articleReportTable(events):'<p class="muted">Bitte mindestens einen Anlass auswählen.</p>';
+}
+function drawArticleReport(){
+  const el=document.getElementById('articleReport');
+  if(!el)return;
+  const previously=[...el.querySelectorAll('input[data-report-event]:checked')].map(e=>e.value);
+  const events=articleReportEvents();
+  const chosen=previously.length?previously:['current'];
+  el.innerHTML='<h3>Artikel-Mengenauswertung</h3><p class="muted">Wähle einen oder mehrere Anlässe. So kannst du beispielsweise die beiden Anlässe vom Freitag zusammen auswerten. Berücksichtigt werden abgerechnete Artikel (auch Zahlungen auf Rechnung), ohne Trinkgeld. Noch offene Bestellungen sind nicht enthalten.</p>'+
+    '<div class="actions">'+events.map(ev=>`<label class="tag"><input type="checkbox" data-report-event value="${esc(ev.id)}" ${chosen.includes(ev.id)?'checked':''} onchange="updateArticleReport()"> ${esc(ev.name)} · ${esc(ev.date)}</label>`).join('')+'</div>'+
+    '<div class="actions"><button onclick="selectAllArticleEvents()">Alle Anlässe auswählen</button><button onclick="printArticleReport()">Artikelübersicht drucken / PDF</button></div><div id="articleReportResult"></div>';
+  updateArticleReport();
+}
+function selectAllArticleEvents(){
+  document.querySelectorAll('#articleReport input[data-report-event]').forEach(el=>el.checked=true);
+  updateArticleReport();
+}
+function printArticleReport(){
+  const events=reportSelection();
+  if(!events.length){alert('Bitte mindestens einen Anlass auswählen.');return;}
+  printContent('<h2>Parfanna Torkel – Artikel-Mengenauswertung</h2><p>'+events.map(x=>esc(x.name)+' ('+esc(x.date)+')').join(' · ')+'</p>'+articleReportTable(events));
+}
+
+function deleteArchivedEvent(index){
+  const archived=state.archive||[];
+  const event=archived[index];
+  if(!event)return;
+  const title=event.event||'Unbenannter Anlass';
+  if(!confirm('Anlass «'+title+'» vom '+(event.closed||'unbekannten Datum')+' wirklich endgültig löschen?\n\nAlle dazugehörigen Quittungen und Artikelmengen werden aus dem Archiv und der Gesamtauswertung entfernt.\n\nBitte vorher eine Datensicherung erstellen, falls du den Anlass später noch benötigst.'))return;
+  archived.splice(index,1);
+  save();
+  drawReceipts();
+}
+function closeEvent(){const open=Object.values(state.orders).reduce((s,b)=>s+amount(b),0);if(open>0){alert('Es sind noch Bestellungen über '+money(open)+' offen. Bitte zuerst abrechnen.');return}if(!state.receipts.length){alert('Keine Abrechnungen zum Abschliessen vorhanden.');return}const invoices=state.receipts.filter(r=>r.method==='Rechnung').reduce((s,r)=>s+r.amount,0);if(!confirm('Testanlass «'+state.event+'» abschliessen?\nUmsatz: '+money(state.receipts.reduce((s,r)=>s+r.amount,0))+'\nOffene Rechnungen: '+money(invoices)+'\n\nBitte vorher CSV exportieren. Nach dem Abschluss beginnt ein neuer Anlass.'))return;state.archive=state.archive||[];state.archive.push({event:state.event,closed:localDay(),turnover:state.receipts.reduce((s,r)=>s+r.amount,0),tip:state.receipts.reduce((s,r)=>s+(r.tip||0),0),invoices,receipts:state.receipts});state.receipts=[];state.orders={};state.names={};state.event='Neuer Testanlass';document.getElementById('event').value=state.event;save();drawGuests();drawBasket();drawReceipts();}
+function drawReceipts(){document.getElementById('receipts').innerHTML=state.receipts.length?state.receipts.map(r=>`<div class="line"><div class="row"><span>${esc(r.date)} · ${esc(r.target)} · ${esc(r.method)} · <b>${money(r.amount)}</b></span><span><button class="small" onclick="printReceipt('${r.id}')">Drucken / PDF</button> <button class="small" onclick="emailReceipt('${r.id}')">E-Mail-Entwurf</button></span></div></div>`).join(''):'<p class="muted">Noch keine Testabrechnungen.</p>';drawSummary();drawDaily();drawArticleReport()}
+function backupData(){
+  save();
+  const backup={format:'parfanna-torkel-backup',version:1,created:new Date().toISOString(),data:state};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='Parfanna_Torkel_Sicherung_'+localDay()+'_'+new Date().toTimeString().slice(0,8).replaceAll(':','-')+'.json';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
+  alert('Sicherungsdatei erstellt. Bitte in deinem privaten OneDrive ablegen und prüfen, ob sie dort vorhanden ist.');
+}
+async function restoreData(input){
+  const file=input.files&&input.files[0];if(!file)return;
+  try{
+    const obj=JSON.parse(await file.text());
+    if(obj.format!=='parfanna-torkel-backup'||obj.version!==1||!obj.data||!Array.isArray(obj.data.items)||!obj.data.orders||typeof obj.data.orders!=='object'||!Array.isArray(obj.data.receipts)||!obj.data.names||typeof obj.data.names!=='object'||!Array.isArray(obj.data.archive||[]))throw Error('Keine gültige Parfanna-Torkel-Sicherung.');
+    if(!confirm('ACHTUNG: Alle derzeitigen Kassendaten auf diesem Gerät werden durch die Sicherung vom '+new Date(obj.created).toLocaleString('de-CH')+' ersetzt. Wirklich wiederherstellen?'))return;
+    const old=state;state=obj.data;
+    try{localStorage.setItem(storeKey,JSON.stringify(state))}catch(e){state=old;throw Error('Speichern fehlgeschlagen: '+e.message)}
+    table='Anlass';seat=0;selected='Anlass';paymentKeys=null;
+    document.getElementById('event').value=state.event||'';
+    document.getElementById('payment').classList.add('hide');
+    drawTables();drawGuests();drawProducts();drawBasket();drawReceipts();
+    alert('Datensicherung erfolgreich wiederhergestellt.');
+  }catch(e){alert('Wiederherstellung nicht möglich: '+e.message)}finally{input.value=''}
+}
+function exportCsv(){let rows=[['Anlass','Datum','Buchungsziel','Zahlungsart','Artikel','Menge','Einzelpreis CHF','Total CHF','Erhalten CHF','Rückgeld CHF','Trinkgeld CHF','Total inkl. Trinkgeld CHF']];state.receipts.forEach(r=>r.lines.forEach(x=>rows.push([r.event,r.date,r.target,r.method,x.name,x.qty,x.price.toFixed(2),(x.price*x.qty).toFixed(2),r.method!=='Rechnung'?(r.tendered??r.amount).toFixed(2):'',r.method!=='Rechnung'?(r.change??0).toFixed(2):'',r.method!=='Rechnung'?(r.tip??0).toFixed(2):'',(r.amount+(r.tip||0)).toFixed(2)])));Object.entries(state.orders).forEach(([k,b])=>b.forEach(x=>rows.push([state.event,'',label(k),'OFFEN',x.name,x.qty,x.price.toFixed(2),(x.price*x.qty).toFixed(2),'','','',''])));let csv='\ufeff'+rows.map(r=>r.map(x=>'"'+String(x).replaceAll('"','""')+'"').join(';')).join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='Parfanna_Torkel_Test_Gesamtuebersicht.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500)}
+function printOverview(){let rows=state.receipts.map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.target)}</td><td>${esc(r.method)}</td><td>${money(r.amount)}</td><td>${money(r.tip||0)}</td></tr>`).join('');printContent(`<h2>Parfanna Torkel – Test-Gesamtübersicht</h2><p>${esc(state.event)}</p>${document.getElementById('summary').innerHTML}${document.getElementById('dailyOverview').innerHTML}<table><tr><th>Datum</th><th>Bereich</th><th>Zahlung</th><th>Betrag</th><th>Trinkgeld</th></tr>${rows}</table><p>Nur Testdaten.</p>`)}
+function resetAll(){if(!confirm('Alle Testbestellungen, Testquittungen und Gastnamen löschen?'))return;state.orders={};state.receipts=[];state.names={};save();drawGuests();drawBasket();drawReceipts()}
+document.getElementById('event').value=state.event;drawTables();drawGuests();drawProducts();drawBasket();drawReceipts();
+</script><script>if ('serviceWorker' in navigator && location.protocol === 'https:') {window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js').catch(err => console.warn('Offline-Installation nicht möglich:',err)));}</script></body></html>
